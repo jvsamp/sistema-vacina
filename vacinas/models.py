@@ -7,10 +7,19 @@ from django.core.exceptions import ValidationError
 
 class Paciente(models.Model):
     nome = models.CharField(max_length=200)
-    cpf = models.CharField(max_length=14, unique=True)
-    cartao_sus = models.CharField(max_length=15, unique=True, verbose_name="Cartão SUS")
+    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
+    cartao_sus = models.CharField(max_length=15, unique=True, blank=True, null=True, verbose_name="Cartão SUS")
     data_nascimento = models.DateField()
+    endereco = models.CharField(max_length=255, blank=True, default="")
     telefone = models.CharField(max_length=15, blank=True, null=True) # Trocado de WhatsApp para Telefone
+    responsavel = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='dependentes',
+        verbose_name="Responsável",
+    )
 
     def __str__(self):
         return self.nome

@@ -17,6 +17,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 
 
 OFFLINE_TRACKING_DISABLED = False
@@ -92,6 +93,36 @@ def _sync_error(request, message, status=422):
         return JsonResponse({'ok': False, 'message': message}, status=status)
     return None
 
+
+def _normalizar_nome(nome):
+    return ' '.join((nome or '').split())
+
+
+def _buscar_paciente_por_identificacao(data):
+    cpf = (data.get('cpf') or '').strip()
+    if cpf:
+        paciente = Paciente.objects.filter(cpf=cpf).first()
+        if paciente:
+            return paciente
+
+    nome = _normalizar_nome(data.get('nome'))
+    data_nascimento = parse_date((data.get('data_nascimento') or '').strip())
+    if not nome or not data_nascimento:
+        return None
+    return Paciente.objects.filter(
+        nome__iexact=nome,
+        data_nascimento=data_nascimento,
+    ).order_by('id').first()
+
+
+def _parse_data_hora_agendamento(value):
+    data_hora = parse_datetime((value or '').strip())
+    if not data_hora:
+        return None
+    if timezone.is_naive(data_hora):
+        data_hora = timezone.make_aware(data_hora, timezone.get_current_timezone())
+    return data_hora
+
 @login_required
 def home(request):
     # 1. Buscamos todas as aplicações (vacinas aplicadas)
@@ -123,7 +154,11 @@ def cadastrar_paciente(request):
         if error_response:
             return error_response
     else:
-        form = PacienteForm()
+        initial = {}
+        responsavel_id = request.GET.get('responsavel')
+        if responsavel_id and Paciente.objects.filter(pk=responsavel_id).exists():
+            initial['responsavel'] = responsavel_id
+        form = PacienteForm(initial=initial)
     return render(request, 'vacinas/cadastro_paciente.html', {'form': form})
 
 @login_required
@@ -148,7 +183,7 @@ def registrar_dose(request):
 
 @login_required
 def listar_pacientes(request):
-    pacientes = Paciente.objects.all().order_by('nome')
+    pacientes = Paciente.objects.select_related('responsavel').prefetch_related('dependentes').order_by('nome')
     return render(request, 'vacinas/listar_pacientes.html', {'pacientes': pacientes})
 
 @login_required
@@ -171,12 +206,12 @@ def portal_boas_vindas(request):
     return render(request, 'vacinas/portal_boas_vindas.html')
 
 def caderneta_paciente(request):
-    cpf = request.GET.get('cpf')
     paciente = None
     doses = [] # Criamos a lista de doses vazia por padrão
+    busca_ativa = bool(request.GET.get('nome') or request.GET.get('data_nascimento') or request.GET.get('cpf'))
     
-    if cpf:
-        paciente = Paciente.objects.filter(cpf=cpf).first()
+    if busca_ativa:
+        paciente = _buscar_paciente_por_identificacao(request.GET)
         if paciente:
     
             doses = Vacina.objects.filter(paciente=paciente).select_related('item_estoque__posto').order_by('-data_aplicacao')
@@ -184,7 +219,7 @@ def caderneta_paciente(request):
     return render(request, 'vacinas/caderneta.html', {
         'paciente': paciente,
         'doses': doses, 
-        'busca_ativa': bool(cpf)
+        'busca_ativa': busca_ativa
     })
 
 def index_escolha(request):
@@ -503,7 +538,15 @@ def offline_bootstrap(request):
 
     if request.user.is_authenticated:
         payload['pacientes'] = list(
-            Paciente.objects.order_by('nome').values('id', 'nome', 'cpf', 'cartao_sus')
+            Paciente.objects.order_by('nome').values(
+                'id',
+                'nome',
+                'data_nascimento',
+                'endereco',
+                'cpf',
+                'cartao_sus',
+                'responsavel_id',
+            )
         )
 
     return JsonResponse(payload)
@@ -516,17 +559,23 @@ def agendar_vacina(request):
     if request.method == 'POST':
         if _offline_already_applied(request):
             return _sync_success(request, 'agendar_vacina', 'Agendamento ja sincronizado anteriormente.')
-        cpf = request.POST.get('cpf')
         item_id = request.POST.get('item_estoque')
-        data_hora = request.POST.get('data_hora')
+        data_hora = _parse_data_hora_agendamento(request.POST.get('data_hora'))
         
-        paciente = Paciente.objects.filter(cpf=cpf).first()
+        paciente = _buscar_paciente_por_identificacao(request.POST)
         
         if not paciente:
-            error_response = _sync_error(request, 'CPF nao encontrado. Faca seu cadastro primeiro.')
+            error_response = _sync_error(request, 'Pessoa nao encontrada. Confira o nome completo e a data de nascimento.')
             if error_response:
                 return error_response
-            messages.error(request, 'CPF não encontrado. Faça seu cadastro primeiro.')
+            messages.error(request, 'Pessoa não encontrada. Confira o nome completo e a data de nascimento.')
+            return render(request, 'vacinas/agendar_vacina.html', {'postos': postos})
+
+        if not data_hora:
+            error_response = _sync_error(request, 'Informe uma data e horario validos para o agendamento.')
+            if error_response:
+                return error_response
+            messages.error(request, 'Informe uma data e horário válidos para o agendamento.')
             return render(request, 'vacinas/agendar_vacina.html', {'postos': postos})
 
         try:
@@ -572,16 +621,20 @@ def listar_agendamentos(request):
 
 def meus_agendamentos(request):
     agendamentos = None
-    cpf_consultado = request.GET.get('cpf')
+    busca_ativa = bool(request.GET.get('nome') or request.GET.get('data_nascimento') or request.GET.get('cpf'))
 
-    if cpf_consultado:
-        agendamentos = Agendamento.objects.filter(
-            paciente__cpf=cpf_consultado
-        ).order_by('-data_hora')
+    if busca_ativa:
+        paciente = _buscar_paciente_por_identificacao(request.GET)
+        if paciente:
+            agendamentos = Agendamento.objects.filter(
+                paciente=paciente
+            ).select_related('item_estoque', 'item_estoque__posto').order_by('-data_hora')
+        else:
+            agendamentos = []
 
     return render(request, 'vacinas/meus_agendamentos.html', {
         'agendamentos': agendamentos,
-        'cpf_consultado': cpf_consultado
+        'busca_ativa': busca_ativa
     })
 
 @login_required

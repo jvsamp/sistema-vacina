@@ -2,15 +2,36 @@ from django import forms
 from .models import Paciente, Vacina, Estoque, PostoSaude
 
 class PacienteForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        responsaveis = Paciente.objects.filter(responsavel__isnull=True).order_by('nome')
+        if self.instance and self.instance.pk:
+            responsaveis = responsaveis.exclude(pk=self.instance.pk)
+        self.fields['responsavel'].queryset = responsaveis
+
+    def clean_nome(self):
+        return (self.cleaned_data.get('nome') or '').strip()
+
+    def clean_cpf(self):
+        return (self.cleaned_data.get('cpf') or '').strip() or None
+
+    def clean_cartao_sus(self):
+        return (self.cleaned_data.get('cartao_sus') or '').strip() or None
+
     class Meta:
         model = Paciente
-        fields = ['nome', 'cpf', 'data_nascimento','cartao_sus', 'telefone']
+        fields = ['nome', 'data_nascimento', 'endereco', 'cpf', 'cartao_sus', 'telefone', 'responsavel']
         widgets = {
             'data_nascimento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'cpf': forms.TextInput(attrs={'class': 'form-control'}),
-            'cartao_sus': forms.TextInput(attrs={'placeholder': '000 0000 0000 0000'}),
-            'telefone': forms.TextInput(attrs={'placeholder': '(00) 00000-0000'}),
+            'nome': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome completo'}),
+            'endereco': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Rua, número, bairro e complemento'}),
+            'cpf': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Opcional para dependentes'}),
+            'cartao_sus': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '000 0000 0000 0000'}),
+            'telefone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(00) 00000-0000'}),
+            'responsavel': forms.Select(attrs={'class': 'form-select'}),
+        }
+        labels = {
+            'responsavel': 'Responsável (se for dependente)',
         }
 
 class VacinaForm(forms.ModelForm):

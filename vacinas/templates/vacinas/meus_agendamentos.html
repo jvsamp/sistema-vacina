@@ -10,23 +10,29 @@
     </div>
 
     <div class="row">
-        <div class="col-12 col-lg-11 col-xl-10"> 
-            
+        <div class="col-12 col-lg-11 col-xl-10">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 p-md-5">
-                    
                     <form action="" method="GET" class="mb-5">
-                        <div class="input-group shadow-sm rounded-pill overflow-hidden border" style="height: 38px; border-color: #e2e8f0 !important;">
-                            <input type="text" name="cpf" class="form-control border-0 ps-4" 
-                                   placeholder="Digite seu CPF para consultar agendamentos..." 
-                                   value="{{ request.GET.cpf|default:'' }}"
-                                   style="height: 38px; font-size: 0.95rem; background: #fff; box-shadow: none;">
-                            
-                            <button class="btn btn-primary px-5 fw-bold d-flex align-items-center justify-content-center" 
-                                    type="submit" style="height: 38px;">
-                                <i class="fas fa-search me-2"></i>
-                                <span>CONSULTAR</span>
-                            </button>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Nome completo</label>
+                                <input type="text" name="nome" class="form-control shadow-sm rounded-4 border-light-subtle"
+                                       placeholder="Digite o nome completo"
+                                       value="{{ request.GET.nome|default:'' }}"
+                                       required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Data de nascimento</label>
+                                <input type="date" name="data_nascimento" class="form-control shadow-sm rounded-4 border-light-subtle"
+                                       value="{{ request.GET.data_nascimento|default:'' }}"
+                                       required>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100 fw-bold rounded-pill d-flex align-items-center justify-content-center" type="submit">
+                                    <i class="fas fa-search me-2"></i>CONSULTAR
+                                </button>
+                            </div>
                         </div>
                     </form>
 
@@ -35,7 +41,7 @@
                     <div class="results-container">
                         {% if agendamentos %}
                             <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-list me-2 text-primary"></i> Agendamentos Localizados</h5>
-                            
+
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle">
                                     <thead class="table table-mobile-cards">
@@ -54,7 +60,7 @@
                                                 <br><small class="text-muted">Lote: {{ agendamento.item_estoque.lote }}</small>
                                             </td>
                                             <td>
-                                                <i class="fas fa-map-marker-alt me-1 text-danger"></i> 
+                                                <i class="fas fa-map-marker-alt me-1 text-danger"></i>
                                                 {{ agendamento.item_estoque.posto.nome }}
                                             </td>
                                             <td class="small">
@@ -75,10 +81,11 @@
                                 </table>
                             </div>
 
-                        {% elif request.GET.cpf %}
+                        {% elif busca_ativa %}
                             <div class="text-center py-5">
                                 <i class="fas fa-calendar-times fa-3x text-light mb-3"></i>
-                                <h5 class="text-muted">Nenhum agendamento encontrado para este CPF.</h5>
+                                <h5 class="text-muted">Nenhum agendamento encontrado.</h5>
+                                <p class="text-muted small">Confira o nome completo e a data de nascimento.</p>
                             </div>
                         {% else %}
                             <div class="text-center py-5">
@@ -87,15 +94,13 @@
                                 </div>
                                 <h4 class="text-secondary fw-bold">Aguardando consulta...</h4>
                                 <p class="text-muted mx-auto" style="max-width: 450px;">
-                                    Insira seu CPF acima para verificar a data, hora e o local onde sua vacina foi agendada.
+                                    Insira o nome completo e a data de nascimento para verificar data, hora e local da vacina agendada.
                                 </p>
                             </div>
                         {% endif %}
                     </div>
-
                 </div>
             </div>
-
         </div>
     </div>
 </div>

@@ -2,56 +2,85 @@
 
 {% block content %}
 <div class="container-fluid py-3 px-md-4">
-    
     <header class="mb-4">
         <h4 class="fw-bold mb-0 text-dark">
-            <i class="fas fa-user-plus me-2 text-primary"></i> 
-            {% if editando %}Editar Registro{% else %}Novo Paciente{% endif %}
+            <i class="fas fa-user-plus me-2 text-primary"></i>
+            {% if editando %}Editar Registro{% else %}Novo Paciente ou Dependente{% endif %}
         </h4>
-        <p class="text-muted small">Preencha os campos essenciais para o sistema.</p>
+        <p class="text-muted small">Preencha os dados da pessoa. Para dependentes, selecione o responsável.</p>
     </header>
 
     <div class="content-card border-0 shadow-sm p-4">
         <form method="POST" data-offline-sync="paciente">
             {% csrf_token %}
-            
-            <div class="row g-3"> <div class="col-lg-12">
-                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Nome Completo</label>
+
+            {% if form.errors %}
+                <div class="alert alert-danger small rounded-3">
+                    Revise os campos destacados antes de salvar.
+                </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Nome Completo</label>
                     <div class="slim-field">
                         {{ form.nome }}
                     </div>
+                    {{ form.nome.errors }}
                 </div>
 
-                <div class="col-md-4 col-lg-4">
-                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">CPF</label>
-                    <div class="slim-field">
-                        {{ form.cpf }}
-                    </div>
-                </div>
-
-                <div class="col-md-4 col-lg-4">
-                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Cartão SUS</label>
-                    <div class="slim-field">
-                        {{ form.cartao_sus }}
-                    </div>
-                </div>
-
-                <div class="col-md-4 col-lg-4">
-                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Data de Nascimento</label>
+                <div class="col-md-4">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Data de Nascimento</label>
                     <div class="slim-field">
                         {{ form.data_nascimento }}
                     </div>
+                    {{ form.data_nascimento.errors }}
                 </div>
 
-                <div class="col-md-4 col-lg-4">
-                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Telefone</label>
+                <div class="col-md-4">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Telefone</label>
                     <div class="slim-field">
                         {{ form.telefone }}
                     </div>
+                    {{ form.telefone.errors }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Responsável</label>
+                    <div class="slim-field">
+                        {{ form.responsavel }}
+                    </div>
+                    <div class="form-text small">Use apenas se este cadastro for de um dependente.</div>
+                    {{ form.responsavel.errors }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Endereço</label>
+                    <div class="slim-field">
+                        {{ form.endereco }}
+                    </div>
+                    {{ form.endereco.errors }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">CPF</label>
+                    <div class="slim-field">
+                        {{ form.cpf }}
+                    </div>
+                    <div class="form-text small">Opcional para dependentes sem CPF próprio.</div>
+                    {{ form.cpf.errors }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label mb-1 fw-bold text-secondary text-uppercase">Cartão SUS</label>
+                    <div class="slim-field">
+                        {{ form.cartao_sus }}
+                    </div>
+                    {{ form.cartao_sus.errors }}
                 </div>
 
                 <div class="col-12 mt-4 pt-3 border-top d-flex align-items-center">
-                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm rounded-pill" style="font-size: 0.85rem;">
+                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold shadow-sm rounded-pill">
                         <i class="fas fa-save me-2"></i>Salvar Registro
                     </button>
                     <a href="{% url 'listar_pacientes' %}" class="btn btn-link btn-sm text-muted text-decoration-none ms-3">
@@ -64,33 +93,40 @@
 </div>
 
 <style>
-    /* CSS PARA O EFEITO SLIM TOTAL */
-    .slim-field input, 
+    .slim-field input,
     .slim-field select {
         display: block;
         width: 100%;
-        height: 38px !important; /* Altura reduzida */
+        height: 38px !important;
         padding: 0 12px !important;
-        font-size: 0.85rem !important; /* Fonte menor */
+        font-size: 0.85rem !important;
         background-color: #f8fafc !important;
         border: 1px solid #e2e8f0 !important;
-        border-radius: 6px !important; /* Bordas mais retas e profissionais */
+        border-radius: 6px !important;
         transition: all 0.2s;
     }
 
-    .slim-field input:focus {
+    .slim-field input:focus,
+    .slim-field select:focus {
         background-color: #fff !important;
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         outline: none;
     }
 
-    /* Ajuste para alinhar labels */
     .form-label {
         display: block;
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
     }
 
-    /* Remove padding excessivo do card se necessário */
+    .errorlist {
+        margin: 0.35rem 0 0;
+        padding-left: 1rem;
+        color: #dc2626;
+        font-size: 0.78rem;
+    }
+
     .content-card {
         background: #fff;
         border-radius: 12px;

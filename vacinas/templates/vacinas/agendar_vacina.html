@@ -2,7 +2,6 @@
 
 {% block content %}
 <div class="container-fluid py-4">
-    
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
         {% if messages %}
             {% for message in messages %}
@@ -29,26 +28,30 @@
         <h2 class="fw-bold text-dark d-flex align-items-center">
             <i class="fas fa-calendar-plus me-3 text-primary"></i> Agendar Nova Dose
         </h2>
-        <p class="text-muted">Escolha a unidade e a vacina para garantir sua imunização.</p>
+        <p class="text-muted">Informe a pessoa pelo nome completo e nascimento, depois escolha unidade, vacina e horário.</p>
     </div>
 
     <div class="row">
-        <div class="col-12 col-lg-11 col-xl-10"> 
+        <div class="col-12 col-lg-11 col-xl-10">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body p-4 p-md-5">
-                    
                     <form method="POST" id="form-agendamento" data-offline-sync="agendamento">
                         {% csrf_token %}
-                        
+
                         <div class="mb-5">
                             <label class="form-label fw-bold small text-muted text-uppercase">Identificação do Cidadão</label>
-                            <div class="input-group shadow-sm rounded-pill overflow-hidden border" style="height: 45px; border-color: #e2e8f0 !important;">
-                                <span class="input-group-text border-0 bg-white ps-3">
-                                    <i class="fas fa-user text-muted small"></i>
-                                </span>
-                                <input type="text" name="cpf" class="form-control border-0 ps-2" 
-                                       placeholder="Digite o CPF para agendar..." required
-                                       style="height: 45px; font-size: 0.95rem; background: #fff; box-shadow: none;">
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <input type="text" name="nome" class="form-control shadow-sm rounded-4 border-light-subtle"
+                                           placeholder="Nome completo"
+                                           style="height: 45px;"
+                                           required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="date" name="data_nascimento" class="form-control shadow-sm rounded-4 border-light-subtle"
+                                           style="height: 45px;"
+                                           required>
+                                </div>
                             </div>
                         </div>
 
@@ -84,7 +87,6 @@
                             </div>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
@@ -93,16 +95,14 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    // Lógica do Pop-up (Toast)
     document.addEventListener('DOMContentLoaded', function () {
-        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
         var toastList = toastElList.map(function (toastEl) {
-            return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 })
-        })
-        toastList.forEach(toast => toast.show())
+            return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+        });
+        toastList.forEach(function (toast) { toast.show(); });
     });
 
-    // Lógica AJAX para carregar vacinas
     $("#id_posto").change(function () {
         const url = "{% url 'ajax_carregar_vacinas' %}";
         const postoId = $(this).val();

@@ -28,7 +28,10 @@
         </td>
         <td data-label="PACIENTE">
             <div class="text-end"> <span class="d-block fw-bold text-primary">{{ agend.paciente.nome }}</span>
-                <small class="text-muted">{{ agend.paciente.cpf }}</small>
+                <small class="text-muted">
+                    Nasc.: {{ agend.paciente.data_nascimento|date:"d/m/Y" }}
+                    {% if agend.paciente.cpf %} · CPF: {{ agend.paciente.cpf }}{% endif %}
+                </small>
             </div>
         </td>
         <td data-label="VACINA">

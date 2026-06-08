@@ -65,7 +65,10 @@
                                     </td>
                                     <td>
                                         <div class="fw-bold">{{ agend.paciente.nome }}</div>
-                                        <small class="text-muted">{{ agend.paciente.cpf }}</small>
+                                        <small class="text-muted">
+                                            Nasc.: {{ agend.paciente.data_nascimento|date:"d/m/Y" }}
+                                            {% if agend.paciente.cpf %} · CPF: {{ agend.paciente.cpf }}{% endif %}
+                                        </small>
                                     </td>
                                     <td>
                                         <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2">

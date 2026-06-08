@@ -218,7 +218,7 @@
                 <a class="nav-link text-danger mt-4" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="fas fa-sign-out-alt"></i> Sair</a>
             {% else %}
                 <p class="menu-header" style="padding: 1.2rem 1.2rem 0.4rem; text-transform: uppercase; font-size: 0.65rem; font-weight: 700; color: #94a3b8;">Portal</p>
-                <a class="nav-link {% if 'caderneta' in request.path %}active{% endif %}" href="{% url 'caderneta_paciente' %}"><i class="fas fa-search"></i> Consultar CPF</a>
+                <a class="nav-link {% if 'caderneta' in request.path %}active{% endif %}" href="{% url 'caderneta_paciente' %}"><i class="fas fa-search"></i> Consultar Caderneta</a>
                 <a class="nav-link {% if '/agendar' in request.path %}active{% endif %}" href="{% url 'agendar_vacina' %}"><i class="fas fa-calendar-check"></i> Agendar Dose</a>
                 <a class="nav-link {% if 'meus-agendamentos' in request.path %}active{% endif %}" href="{% url 'meus_agendamentos' %}">
     <i class="fas fa-clock-rotate-left"></i> Meus Agendamentos
